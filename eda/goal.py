@@ -12,38 +12,40 @@ from eda import eda
 
 class GoalCoding():
     def __init__(self,
-    visual_check=True,
+    visual_check_length=3,
     file_name_or_python_object=None,
     name_to_give_the_instance_object = None,
     nb_rows_to_read=-1, ):
         '''
-        PARADIGM:
-        A class that lets you code by goals and sub-goals selection via tabbing
+      PARADIGM:
+      A class that lets you code by goals and sub-goals selection via tabbing
 
-        First you need to define the data to work on, either at creation or using the configure action
+      First you need to define the data to work on, either at creation or using the configure action
 
-        Then, hit tab on your instance to explore the actions you can perform
+      Then, hit tab on your instance to explore the actions you can perform
 
-        By default, the instance performs actions on the last object manipulated and saves it to the same, but you can specify other ones as arguments
+      By default, the instance performs actions on the last object manipulated and saves it to the same, but you can specify other ones as arguments
 
 
-        OPTIONAL INPUT (sent to your_instance.configure)
-          visual_check: print a visual check of the result of actions that modify objects
-          file_name_or_python_object: the initial data to process
-          name_to_give_the_instance_object: the name of the initial data copied into this instance
-          nb_rows_to_read (int): -1 reads everything
-        '''
+      OPTIONAL INPUT (sent to your_instance.configure)
+        visual_check_length: 
+          >=1 configure the instance to print a visual check of the result of actions that modify objects
+          -1  configure the instance to not print a visual check
+        file_name_or_python_object: the initial data to process
+        name_to_give_the_instance_object: the name of the initial data copied into this instance
+        nb_rows_to_read (int): -1 reads everything. Only used if name_to_give_the_instance_object is provided
+      '''
         self.eda = eda(self)
         self.subset_rows = SubsetRows(self)
         self.configure = Configure(self)
-        self._visual_check = visual_check
+        self.visual_check_length = visual_check_length
         self.objects = Objects(self)
+        self.o = {}  # dictionary of user objects
 
         if file_name_or_python_object != None:
             self.objects.add_object(file_name_or_python_object,
                                     name_to_give_the_instance_object,
                                     nb_rows_to_read)
-
 
 
 class Configure():
@@ -64,23 +66,23 @@ class Objects():
   '''
     def __init__(self, goal):
         self._ = goal
-        self._objs = {}
 
     def add_object(self, file_name_or_python_object, name_to_give_the_instance_object, nb_rows_to_read=-1):
+
         warnings.simplefilter('error', UserWarning)
         try:
             if file_name_or_python_object == None:
                 print('Usage: GoalCoding(file_name_or_python_object)')
             elif isinstance(file_name_or_python_object, (pd.DataFrame,pd.Series)):
                 if nb_rows_to_read < 1:
-                    self.objs[name_to_give_the_instance_object] = file_name_or_python_object.copy()
+                    self._.o[name_to_give_the_instance_object] = file_name_or_python_object.copy()
                 else:
-                    self.objs[name_to_give_the_instance_object] = file_name_or_python_object[:nb_rows_to_read].copy()
+                    self._.o[name_to_give_the_instance_object] = file_name_or_python_object[:nb_rows_to_read].copy()
             elif isinstance(file_name_or_python_object, str):
                 if nb_rows_to_read < 1:
-                    self.objs[name_to_give_the_instance_object] = pd.read_csv(file_name_or_python_object)
+                    self._.o[name_to_give_the_instance_object] = pd.read_csv(file_name_or_python_object)
                 else:
-                    self.objs[name_to_give_the_instance_object] = pd.read_csv(file_name_or_python_object,
+                    self._.o[name_to_give_the_instance_object] = pd.read_csv(file_name_or_python_object,
                                         nrows = nb_rows_to_read)
             else:
                 print('Unsupported input type')
@@ -88,12 +90,16 @@ class Objects():
             raise
 
     def set_last_used(self, object_name):
-      if not object_name in self._objs.keys():
-        print("Error, the object {} is not in this instance's objects".format(object_name))
-        return
+        if not object_name in self._.o.keys():
+            print("Error, the object {} is not in this instance's objects".format(object_name))
+            return
 
-      self._last_used = object_name
+        self._last_used = object_name
 
+    def print_info(self):
+        print('Your objects:')
+        for key, val in self._.o.items():
+            print('Name: {} , Type: {}'.format(key, type(val)))
 
 
 class SubsetRows():
@@ -102,6 +108,14 @@ class SubsetRows():
 
     def meet_logical_criteria(self, condition_or_filter_for_samples_to_keep,
                               on_object='last_used', to_object='same'):
+        '''
+        on_object:
+          'last_used' (default)
+          name given to the object with add_object or at instance creation
+        to_object:
+          'same' (default) to replace the content of the on_object
+          name of the new object to create
+        '''
         if on_object == 'last_used':
             on_object = self._.df
 
