@@ -52,6 +52,7 @@ class GoalCoding():
         self.subset_rows = SubsetRows(self)
         self.configure = Configure(self)
         self._visual_check = visual_check
+        self.objects = Objects(self)
 
 
 class Configure():
@@ -65,6 +66,13 @@ class Configure():
       '''
         self._._visual_check_length = visual_check_length
 
+class Objects():
+  ''' 
+  Where all user objects are stored
+  '''
+  def __init__(self, goal):
+    self._ = goal
+
 
 class SubsetRows():
     def __init__(self, goal):
@@ -72,18 +80,22 @@ class SubsetRows():
 
     def meet_logical_criteria(self, condition_or_filter_for_samples_to_keep,
                               on_object='last_used', to_object='same'):
-        if object_to_filter == 'last_used':
-            object_to_filter = self._.df
+        if on_object == 'last_used':
+            on_object = self._.df
 
-        if isinstance(object_to_filter, pd.DataFrame) or isinstance(object_to_filter, pd.DataFrame) \
-          or isinstance(object_to_filter, np.array):
+        if isinstance(on_object, pd.DataFrame) or isinstance(on_object, pd.DataFrame) \
+          or isinstance(on_object, np.array):
             print('df_or_series_or_np_array[condition_or_filter_for_samples_to_keep]')
-            res = object_to_filter[condition_or_filter_for_samples_to_keep]
+
+            if to_object='same':
+              on_object = on_object[condition_or_filter_for_samples_to_keep]
+            else:
+              self._.objects[to_object] = on_object[condition_or_filter_for_samples_to_keep]
+
             if self._._visual_check_length > 0:
                 print(res[:self._._visual_check_length])
-            return res
         else:
-            print('Unsupported object type:', type(object_to_filter))
+            print('Unsupported object type:', type(on_object))
             print('Supported types are Pandas DataFrame, Series or Numpy array')
 
 
