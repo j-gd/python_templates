@@ -16,9 +16,9 @@ class eda():
         warnings.simplefilter('error', UserWarning)
         try:
             display(Markdown('### Info'))
-            display(self._.df.info())
+            display(self._.current.info())
             display(Markdown('### First {} rows:'.format(nb_lines)))
-            display(self._.df.iloc[:nb_lines])
+            display(self._.current.iloc[:nb_lines])
         except:
             raise
 
@@ -27,6 +27,6 @@ class eda():
         try:
             self.basic(nb_lines)
             display(Markdown('### Profile report:'))
-            display(pp.ProfileReport(self._.df))
+            display(pp.ProfileReport(self._.current))
         except:
             raise
