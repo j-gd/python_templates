@@ -11,7 +11,11 @@ import warnings
 from eda import eda
 
 class GoalCoding():
-    def __init__(self, file_name_or_pd_dataframe, nb_rows_to_read=-1, visual_check=True):
+    def __init__(self,
+    visual_check=True,
+    file_name_or_python_object=None,
+    name_to_give_the_instance_object = None,
+    nb_rows_to_read=-1, ):
         '''
         PARADIGM:
         A class that lets you code by goals and sub-goals selection via tabbing
@@ -24,35 +28,22 @@ class GoalCoding():
 
 
         OPTIONAL INPUT (sent to your_instance.configure)
-          file_name_or_pd_dataframe: the data to process
-          nb_rows_to_read (int): -1 reads everything
           visual_check: print a visual check of the result of actions that modify objects
+          file_name_or_python_object: the initial data to process
+          name_to_give_the_instance_object: the name of the initial data copied into this instance
+          nb_rows_to_read (int): -1 reads everything
         '''
-
-        warnings.simplefilter('error', UserWarning)
-        try:
-            if file_name_or_pd_dataframe == None:
-                print('Usage: GoalProgramming(file_name_or_pd_dataframe)')
-            elif isinstance(file_name_or_pd_dataframe, (pd.DataFrame,pd.Series)):
-                if nb_rows_to_read < 1:
-                    self.df = file_name_or_pd_dataframe
-                else:
-                    self.df = file_name_or_pd_dataframe[:nb_rows_to_read]
-            elif isinstance(file_name_or_pd_dataframe, str):
-                if nb_rows_to_read < 1:
-                    self.df = pd.read_csv(file_name_or_pd_dataframe)
-                else:
-                    self.df = pd.read_csv(file_name_or_pd_dataframe,
-                                        nrows = nb_rows_to_read)
-            else:
-                print('Unsupported input type')
-        except:
-            raise
         self.eda = eda(self)
         self.subset_rows = SubsetRows(self)
         self.configure = Configure(self)
         self._visual_check = visual_check
         self.objects = Objects(self)
+
+        if file_name_or_python_object != None:
+            self.objects.add_object(file_name_or_python_object,
+                                    name_to_give_the_instance_object,
+                                    nb_rows_to_read)
+
 
 
 class Configure():
@@ -66,12 +57,43 @@ class Configure():
       '''
         self._._visual_check_length = visual_check_length
 
+
 class Objects():
-  ''' 
+    ''' 
   Where all user objects are stored
   '''
-  def __init__(self, goal):
-    self._ = goal
+    def __init__(self, goal):
+        self._ = goal
+        self._objs = {}
+
+    def add_object(self, file_name_or_python_object, name_to_give_the_instance_object, nb_rows_to_read=-1):
+        warnings.simplefilter('error', UserWarning)
+        try:
+            if file_name_or_python_object == None:
+                print('Usage: GoalCoding(file_name_or_python_object)')
+            elif isinstance(file_name_or_python_object, (pd.DataFrame,pd.Series)):
+                if nb_rows_to_read < 1:
+                    self.objs[name_to_give_the_instance_object] = file_name_or_python_object.copy()
+                else:
+                    self.objs[name_to_give_the_instance_object] = file_name_or_python_object[:nb_rows_to_read].copy()
+            elif isinstance(file_name_or_python_object, str):
+                if nb_rows_to_read < 1:
+                    self.objs[name_to_give_the_instance_object] = pd.read_csv(file_name_or_python_object)
+                else:
+                    self.objs[name_to_give_the_instance_object] = pd.read_csv(file_name_or_python_object,
+                                        nrows = nb_rows_to_read)
+            else:
+                print('Unsupported input type')
+        except:
+            raise
+
+    def set_last_used(self, object_name):
+      if not object_name in self._objs.keys():
+        print("Error, the object {} is not in this instance's objects".format(object_name))
+        return
+
+      self._last_used = object_name
+
 
 
 class SubsetRows():
@@ -87,10 +109,10 @@ class SubsetRows():
           or isinstance(on_object, np.array):
             print('df_or_series_or_np_array[condition_or_filter_for_samples_to_keep]')
 
-            if to_object='same':
-              on_object = on_object[condition_or_filter_for_samples_to_keep]
+            if to_object == 'same':
+                on_object = on_object[condition_or_filter_for_samples_to_keep]
             else:
-              self._.objects[to_object] = on_object[condition_or_filter_for_samples_to_keep]
+                self._.objects[to_object] = on_object[condition_or_filter_for_samples_to_keep]
 
             if self._._visual_check_length > 0:
                 print(res[:self._._visual_check_length])
